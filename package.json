@@ -1,0 +1,59 @@
+{
+	"name": "dia",
+	"version": "0.0.1",
+	"license": "MIT",
+	"bin": "dist/cli.js",
+	"type": "module",
+	"engines": {
+		"node": ">=16"
+	},
+	"scripts": {
+		"build": "tsc",
+		"dev": "tsc --watch",
+		"test": "prettier --check . && xo && ava"
+	},
+	"files": [
+		"dist"
+	],
+	"dependencies": {
+		"@inkjs/ui": "^2.0.0",
+		"dotenv": "^16.4.7",
+		"ink": "^4.4.1",
+		"openai": "^4.75.0",
+		"pastel": "^2.0.2",
+		"react": "^18.3.1",
+		"zod": "^3.23.8"
+	},
+	"devDependencies": {
+		"@sindresorhus/tsconfig": "^3.0.1",
+		"@types/react": "^18.3.12",
+		"@vdemedes/prettier-config": "^2.0.1",
+		"ava": "^5.3.1",
+		"chalk": "^5.3.0",
+		"eslint-config-xo-react": "^0.27.0",
+		"eslint-plugin-react": "^7.37.2",
+		"eslint-plugin-react-hooks": "^4.6.2",
+		"ink-testing-library": "^3.0.0",
+		"prettier": "^2.8.8",
+		"ts-node": "^10.9.2",
+		"typescript": "^5.7.2",
+		"xo": "^0.54.2"
+	},
+	"ava": {
+		"extensions": {
+			"ts": "module",
+			"tsx": "module"
+		},
+		"nodeArguments": [
+			"--loader=ts-node/esm"
+		]
+	},
+	"xo": {
+		"extends": "xo-react",
+		"prettier": true,
+		"rules": {
+			"react/prop-types": "off"
+		}
+	},
+	"prettier": "@vdemedes/prettier-config"
+}
