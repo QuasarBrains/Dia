@@ -18,8 +18,6 @@ export default function Index({options: _}: Props) {
 
 	exit();
 
-	console.log('This is a test');
-
 	useInput((_, key) => {
 		if (key.escape) {
 			exit();
