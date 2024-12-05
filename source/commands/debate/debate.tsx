@@ -1,6 +1,10 @@
 import React, {useEffect, useState} from 'react';
-import {Debate, Statement} from '../../conversations/debate.js';
-import {Debater, initializeDebate} from '../../conversations/debate.js';
+import {
+	Debate,
+	Statement,
+	Debater,
+	initializeDebate,
+} from '../../conversations/debate.js';
 import {Box, Text} from 'ink';
 import {Spinner} from '@inkjs/ui';
 
@@ -14,7 +18,9 @@ export default function DebateView({topic, context}: DebateProps) {
 	useEffect(() => {
 		(async () => {
 			const debate = await initializeDebate({topic, context});
-			setDebate(debate);
+			if (debate) {
+				setDebate(debate);
+			}
 		})();
 	}, []);
 
@@ -32,9 +38,12 @@ export default function DebateView({topic, context}: DebateProps) {
 					debate,
 				});
 			});
+			console.log('Initialized debaters: ', debaters);
 			setDebaters(debaters);
 		}
 	}, [debate]);
+
+	console.log('Debators: ', debaters);
 
 	const phaseToBody: Record<Phase, JSX.Element | null> = {
 		introduction: null,
@@ -83,9 +92,10 @@ function OpeningPhase({debate: _, debaters, next: __}: OpeningPhaseProps) {
 
 	const generateOpeningStatements = async () => {
 		setLoadingOpeningStatements(true);
-		const statements = [];
+		const statements: Statement[] = [];
+		console.log('Getting all opening statements...', debaters);
 		for (const debater of debaters) {
-			console.info(`Getting ${debater.name}'s Opening Statement`);
+			console.log(`Getting ${debater.name}'s Opening Statement`);
 			const statement = await debater.getOpeningStatement();
 			if (!statement) {
 				continue;
@@ -97,17 +107,15 @@ function OpeningPhase({debate: _, debaters, next: __}: OpeningPhaseProps) {
 	};
 
 	useEffect(() => {
-		setTimeout(() => {
-			generateOpeningStatements();
-		}, 500);
-	}, []);
+		generateOpeningStatements();
+	}, [debaters]);
 
 	return (
 		<Box flexDirection={'column'}>
 			<Text>
 				We welcome to the stage the following participants in today's debate...
 			</Text>
-			<Box marginBottom={1} flexWrap="wrap">
+			<Box marginBottom={1} flexWrap="wrap" flexDirection="column">
 				{debaters.map(debater => {
 					return (
 						<Box key={debater.name} marginBottom={1} flexDirection="column">
@@ -117,18 +125,20 @@ function OpeningPhase({debate: _, debaters, next: __}: OpeningPhaseProps) {
 					);
 				})}
 			</Box>
-			<Box marginBottom={1}>
-				<Text>Now for opening statements...</Text>
-				{loadingOpeningStatements && (
-					<Spinner label="Waiting for opening statements..." />
-				)}
-				{openingStatements.map(statement => (
-					<Box key={statement.name} marginBottom={1} flexDirection="column">
-						<Text color="green">{statement.name}</Text>
-						<Text italic>{statement.content}</Text>
-					</Box>
-				))}
-			</Box>
+			{loadingOpeningStatements && (
+				<Spinner label="Waiting for opening statements..." />
+			)}
+			{!openingStatements.length && (
+				<Box marginBottom={1}>
+					<Text>Now for opening statements...</Text>
+					{openingStatements.map(statement => (
+						<Box key={statement.name} marginBottom={1} flexDirection="column">
+							<Text color="green">{statement.name}</Text>
+							<Text italic>{statement.content}</Text>
+						</Box>
+					))}
+				</Box>
+			)}
 		</Box>
 	);
 }

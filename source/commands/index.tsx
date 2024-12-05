@@ -11,6 +11,7 @@ type Props = {
 };
 
 export default function Index({options}: Props) {
+	console.log('This is a test');
 	return (
 		<Text>
 			Hello, <Text color="green">{options.name}</Text>
