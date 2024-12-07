@@ -5,8 +5,9 @@ import {
 	Debater,
 	initializeDebate,
 } from '../../conversations/debate.js';
-import {Box, Text} from 'ink';
+import {Box, Text, useInput} from 'ink';
 import {Spinner} from '@inkjs/ui';
+import {useTextStream} from '../../utils/streaming.js';
 
 type DebateProps = {
 	topic: string;
@@ -38,12 +39,9 @@ export default function DebateView({topic, context}: DebateProps) {
 					debate,
 				});
 			});
-			console.log('Initialized debaters: ', debaters);
 			setDebaters(debaters);
 		}
 	}, [debate]);
-
-	console.log('Debators: ', debaters);
 
 	const phaseToBody: Record<Phase, JSX.Element | null> = {
 		introduction: null,
@@ -85,17 +83,16 @@ type OpeningPhaseProps = {
 	debaters: Debater[];
 	next: () => void;
 };
-function OpeningPhase({debate: _, debaters, next: __}: OpeningPhaseProps) {
+function OpeningPhase({debate: _, debaters, next}: OpeningPhaseProps) {
 	const [openingStatements, setOpeningStatements] = useState<Statement[]>([]);
+	const [currentOpeningStatement, setCurrentOpeningStatement] = useState(0);
 	const [loadingOpeningStatements, setLoadingOpeningStatements] =
 		useState(true);
 
 	const generateOpeningStatements = async () => {
 		setLoadingOpeningStatements(true);
 		const statements: Statement[] = [];
-		console.log('Getting all opening statements...', debaters);
 		for (const debater of debaters) {
-			console.log(`Getting ${debater.name}'s Opening Statement`);
 			const statement = await debater.getOpeningStatement();
 			if (!statement) {
 				continue;
@@ -103,6 +100,7 @@ function OpeningPhase({debate: _, debaters, next: __}: OpeningPhaseProps) {
 			statements.push(statement);
 		}
 		setOpeningStatements(statements);
+		setCurrentOpeningStatement(0);
 		setLoadingOpeningStatements(false);
 	};
 
@@ -110,34 +108,87 @@ function OpeningPhase({debate: _, debaters, next: __}: OpeningPhaseProps) {
 		generateOpeningStatements();
 	}, [debaters]);
 
+	useInput(input => {
+		if (input.toLowerCase() === 'n') {
+			if (currentOpeningStatement === openingStatements.length - 1) {
+				setCurrentOpeningStatement(currentOpeningStatement + 1);
+			} else {
+				next();
+			}
+		}
+		if (input.toLowerCase() === 'p') {
+			if (currentOpeningStatement > 0) {
+				setCurrentOpeningStatement(currentOpeningStatement - 1);
+			}
+		}
+	});
+
+	const currentStatement = openingStatements[currentOpeningStatement];
+
+	const {isComplete: greetingComplete, content: greeting} = useTextStream({
+		content:
+			"We welcome to the stage the following participants in today's debate...",
+		space: 200,
+		by: 'char',
+	});
+
+	const {isComplete: openingIntroComplete, content: openingIntro} =
+		useTextStream({
+			content: 'Now for our opening statements...',
+			space: 200,
+			by: 'word',
+		});
+
+	const isFirst = currentOpeningStatement === 0;
+
 	return (
 		<Box flexDirection={'column'}>
 			<Text>
-				We welcome to the stage the following participants in today's debate...
+				{greetingComplete ? 'Greeting is complete' : "Greeting isn't complete."}
 			</Text>
-			<Box marginBottom={1} flexWrap="wrap" flexDirection="column">
-				{debaters.map(debater => {
-					return (
-						<Box key={debater.name} marginBottom={1} flexDirection="column">
-							<Text color={'green'}>{debater.name}</Text>
-							<Text>{debater.position}</Text>
-						</Box>
-					);
-				})}
-			</Box>
-			{loadingOpeningStatements && (
-				<Spinner label="Waiting for opening statements..." />
-			)}
-			{!openingStatements.length && (
-				<Box marginBottom={1}>
-					<Text>Now for opening statements...</Text>
-					{openingStatements.map(statement => (
-						<Box key={statement.name} marginBottom={1} flexDirection="column">
-							<Text color="green">{statement.name}</Text>
-							<Text italic>{statement.content}</Text>
-						</Box>
-					))}
-				</Box>
+			<Text>{greeting}</Text>
+			{greetingComplete && (
+				<>
+					<Text>{debaters.map(d => d.name).join(', ')}</Text>
+					{debaters.map(debater => {
+						return (
+							<Box key={debater.name} marginBottom={1} flexDirection="column">
+								<Text color={'green'}>{debater.name}</Text>
+								<Text>{debater.position}</Text>
+							</Box>
+						);
+					})}
+					{currentStatement && (
+						<Text>
+							{currentOpeningStatement + 1}/{openingStatements.length}
+							{' - '}
+							press "n" to continue
+							{!isFirst && (
+								<>
+									{' - '}
+									press "p" to go back
+								</>
+							)}
+						</Text>
+					)}
+					<Text>{openingIntro}</Text>
+					{openingIntroComplete && (
+						<>
+							<Text>
+								Please welcome {currentStatement?.debater.name} to the stage.
+							</Text>
+							{loadingOpeningStatements && (
+								<Spinner label="Waiting for opening statements..." />
+							)}
+							{currentStatement && (
+								<Box flexDirection="column">
+									<Text color={'green'}>{currentStatement.debater.name}</Text>
+									<Text>{currentStatement.content}</Text>
+								</Box>
+							)}
+						</>
+					)}
+				</>
 			)}
 		</Box>
 	);

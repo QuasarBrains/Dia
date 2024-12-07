@@ -68,8 +68,7 @@ export async function initializeDebate({topic, context}: DebateConfig) {
 }
 
 export type Statement = {
-	name: string;
-	position: string;
+	debater: Debater;
 	content: string;
 };
 
@@ -121,7 +120,7 @@ export class Debater {
 				},
 				{
 					role: 'system',
-					content: 'Please greet the audience.',
+					content: 'Please make your opening argument. Keep it very brief.',
 				},
 			]);
 
@@ -130,9 +129,8 @@ export class Debater {
 			}
 
 			return {
-				name: this.name,
-				position: this.position,
 				content: response,
+				debater: this,
 			};
 		} catch (err) {
 			console.error(err);

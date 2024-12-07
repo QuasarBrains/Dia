@@ -16,8 +16,6 @@ type Step = 'topic' | 'context' | 'confirm' | 'debate';
 export default function Index({options: _}: Props) {
 	const {exit} = useApp();
 
-	exit();
-
 	useInput((_, key) => {
 		if (key.escape) {
 			exit();
@@ -60,8 +58,7 @@ export default function Index({options: _}: Props) {
 	return (
 		<Box flexDirection="column" gap={1}>
 			<Text color={'gray'}>
-				Use 'esc' to exit. A transcript will be generated at the end. This is
-				new.
+				Use 'esc' to exit. A transcript will be generated at the end.
 			</Text>
 			<Box>{stepToBody[step]}</Box>
 		</Box>
